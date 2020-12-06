@@ -51,5 +51,46 @@
     <Image Include="WindowsChess.ico">
       <Filter>Файлы ресурсов</Filter>
     </Image>
+    <Image Include="Figures\bishop.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\bishop1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\horse.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\horse1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\king.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\king1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\pawn.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\pawn1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\queen.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\queen1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\rook.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\rook1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Figures.resx">
+      <Filter>Файлы ресурсов</Filter>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

@@ -166,8 +166,23 @@
     <ResourceCompile Include="WindowsChess.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Figures\bishop.png" />
+    <Image Include="Figures\bishop1.png" />
+    <Image Include="Figures\horse.png" />
+    <Image Include="Figures\horse1.png" />
+    <Image Include="Figures\king.png" />
+    <Image Include="Figures\king1.png" />
+    <Image Include="Figures\pawn.png" />
+    <Image Include="Figures\pawn1.png" />
+    <Image Include="Figures\queen.png" />
+    <Image Include="Figures\queen1.png" />
+    <Image Include="Figures\rook.png" />
+    <Image Include="Figures\rook1.png" />
     <Image Include="small.ico" />
     <Image Include="WindowsChess.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Figures.resx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
