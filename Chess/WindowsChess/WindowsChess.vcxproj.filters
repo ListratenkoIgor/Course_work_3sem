@@ -57,34 +57,46 @@
     <Image Include="Figures\bishop1.png">
       <Filter>Файлы ресурсов</Filter>
     </Image>
-    <Image Include="Figures\horse.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\horse1.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\king.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\king1.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\pawn.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\pawn1.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\queen.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\queen1.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="Figures\rook.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
     <Image Include="Figures\rook1.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\BLACK_B.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\BLACK_K.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\BLACK_N.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\BLACK_P.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\BLACK_Q.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\BLACK_R.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\WHITE_B.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\WHITE_K.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\WHITE_N.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\WHITE_P.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\WHITE_Q.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Figures\WHITE_R.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
       <Filter>Файлы ресурсов</Filter>
     </Image>
   </ItemGroup>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -147,6 +147,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Figures.h">
+      <DependentUpon>Figures.resx</DependentUpon>
+    </ClInclude>
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
@@ -166,18 +169,22 @@
     <ResourceCompile Include="WindowsChess.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="bitmap1.bmp" />
     <Image Include="Figures\bishop.png" />
     <Image Include="Figures\bishop1.png" />
-    <Image Include="Figures\horse.png" />
-    <Image Include="Figures\horse1.png" />
-    <Image Include="Figures\king.png" />
-    <Image Include="Figures\king1.png" />
-    <Image Include="Figures\pawn.png" />
-    <Image Include="Figures\pawn1.png" />
-    <Image Include="Figures\queen.png" />
-    <Image Include="Figures\queen1.png" />
-    <Image Include="Figures\rook.png" />
+    <Image Include="Figures\BLACK_B.bmp" />
+    <Image Include="Figures\BLACK_K.bmp" />
+    <Image Include="Figures\BLACK_N.bmp" />
+    <Image Include="Figures\BLACK_P.bmp" />
+    <Image Include="Figures\BLACK_Q.bmp" />
+    <Image Include="Figures\BLACK_R.bmp" />
     <Image Include="Figures\rook1.png" />
+    <Image Include="Figures\WHITE_B.bmp" />
+    <Image Include="Figures\WHITE_K.bmp" />
+    <Image Include="Figures\WHITE_N.bmp" />
+    <Image Include="Figures\WHITE_P.bmp" />
+    <Image Include="Figures\WHITE_Q.bmp" />
+    <Image Include="Figures\WHITE_R.bmp" />
     <Image Include="small.ico" />
     <Image Include="WindowsChess.ico" />
   </ItemGroup>
