@@ -141,6 +141,11 @@
   <ItemGroup>
     <ClCompile Include="ConsoleTest.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ChessDll\ChessDll.vcxproj">
+      <Project>{c0939501-55c7-4b20-a082-d205d1ec3edb}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

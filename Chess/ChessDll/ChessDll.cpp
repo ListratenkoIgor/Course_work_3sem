@@ -961,7 +961,7 @@ int search(int alpha, int beta, int depth, int score, bool capturesOnly) {
 /*
 	Can return: VALID_MOVE, CHECKMATE, STALEMATE, IN_CHECK or INVALID_MOVE.
 */
-int executeMove(int move) {
+extern "C" int executeMove(int move) {
 	int tos[MAX_TARGET_SQUARES], from;
 
 	assert(isValidMove(move));
@@ -1086,6 +1086,28 @@ int getUserMove() {
 	} while (result == SYNTAX_ERROR);
 	return result;
 }
+int getUserMove2(int fromX,int fromY,int toX,int toY) {
+	int result;
+	int level;
+			int fromCol = fromX;
+			int fromRow = fromY;
+			//int i = (s[2] == '-' ? 3 : 2);
+			int toCol = toX;
+			int toRow = toY;
+			if (fromCol >= 0 && fromCol < 8 && fromRow >= 0 && fromRow < 8
+				&& toCol >= 0 && toCol < 8 && toRow >= 0 && toRow < 8) {
+				result = makeMove(fromCol, fromRow, toCol, toRow);
+			}
+			else {
+				fputs("Enter moves like 'd2d4' or:\n"
+					"'level 1-9' to set computer level (default is 4).\n"
+					"'go' to switch color and let the computer play.\n"
+					"'back' to take back a step.\n"
+					"'new' to start a new game.\n"
+					"'quit' to exit.\n", stdout);
+			}
+	return result;
+}
 
 void printBoard(int from, int to) {
 	int y;
@@ -1158,7 +1180,7 @@ void setLevel(int level) {
 	minEvals = 100;
 	for (i = 0; i < level; ++i) minEvals *= 5;
 }
-
+/*
 int main(int argc, const char* const argv[]) {
 	initGlobals();
 	restart();
@@ -1298,3 +1320,5 @@ int main(int argc, const char* const argv[]) {
 
 	return 0;
 }
+
+*/

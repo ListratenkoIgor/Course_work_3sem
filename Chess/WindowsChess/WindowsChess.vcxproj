@@ -118,7 +118,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -147,16 +147,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Figures.h">
-      <DependentUpon>Figures.resx</DependentUpon>
-    </ClInclude>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ListBox.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WindowsChess.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ListBox.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -169,7 +168,6 @@
     <ResourceCompile Include="WindowsChess.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="bitmap1.bmp" />
     <Image Include="Figures\bishop.png" />
     <Image Include="Figures\bishop1.png" />
     <Image Include="Figures\BLACK_B.bmp" />
@@ -189,7 +187,9 @@
     <Image Include="WindowsChess.ico" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Figures.resx" />
+    <ProjectReference Include="..\ChessDll\ChessDll.vcxproj">
+      <Project>{c0939501-55c7-4b20-a082-d205d1ec3edb}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
