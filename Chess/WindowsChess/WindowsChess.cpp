@@ -1,52 +1,76 @@
-﻿// WindowsChess.cpp : Определяет точку входа для приложения.
-//
-#include <array>
+﻿#include <array>
+#include <stdio.h>
+#include <iostream>
+#include <string>
 #include "pch.h"
 #include "framework.h"
 #include "resource.h"
 #include "WindowsChess.h"
 #include "../ChessDll/ChessDll.h";
-
+#include "ListBox.h";
 // +++TODO: Настроить определение размера поля
 // +++TODO: добавить отрисовку поля
 // +++TODO: добавить выбор\нажатие клеток
-// +-TODO: Добавить отрисовку фигур
-// TODO: добавить ходы 
+// +++TODO: добавить панель с кнопками для управления игрой
+// +++TODO: добавить ходы 
+// +++TODO: Добавить таймер
+// +++TODO: Добавить контрол для истории ходов
+// +++TODO: добавить историю ходов 
+// ++TODO: добавить кнопки на панель 
 // TODO: Добавить ресурсы
-// TODO: добавить историю ходов 
-// TODO: редактировать панель
-// TODO: добавить кнопки на панель 
-// TODO: Добавить главное меню
-int INIT_BOARD[BOARD_SIZE] = {
-	OFFBOARD,	OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,
-	OFFBOARD,	OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,
-	OFFBOARD,	ROOK | WHITE,	KNIGHT | WHITE,	BISHOP | WHITE,	QUEEN | WHITE,	KING | WHITE,	BISHOP | WHITE,	KNIGHT | WHITE,	ROOK | WHITE,	OFFBOARD,
-	OFFBOARD,	PAWN | WHITE,	PAWN | WHITE,	PAWN | WHITE,	PAWN | WHITE,	PAWN | WHITE,	PAWN | WHITE,	PAWN | WHITE,	PAWN | WHITE,	OFFBOARD,
-	OFFBOARD,	EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			OFFBOARD,
-	OFFBOARD,	EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			OFFBOARD,
-	OFFBOARD,	EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			OFFBOARD,
-	OFFBOARD,	EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			EMPTY,			OFFBOARD,
-	OFFBOARD,	PAWN | BLACK,	PAWN | BLACK,	PAWN | BLACK,	PAWN | BLACK,	PAWN | BLACK,	PAWN | BLACK,	PAWN | BLACK,	PAWN | BLACK,	OFFBOARD,
-	OFFBOARD,	ROOK | BLACK,	KNIGHT | BLACK,	BISHOP | BLACK,	QUEEN | BLACK,	KING | BLACK,	BISHOP | BLACK,	KNIGHT | BLACK,	ROOK | BLACK,	OFFBOARD,
-	OFFBOARD,	OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,
-	OFFBOARD,	OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD,		OFFBOARD
-};
+// +-TODO: Добавить отрисовку фигур
+// TODO: Добавить главное меню			 
+#pragma comment(lib,"Msimg32.lib")
 
 #define MAX_LOADSTRING 100
 
-// Глобальные переменные:
-HINSTANCE hInst;                                // текущий экземпляр
-WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
-WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса главного окна
-RECT boardRect = {-1,-1,-1,-1};
+HINSTANCE hInst;
+WCHAR szTitle[MAX_LOADSTRING];
+WCHAR szWindowClass[MAX_LOADSTRING];
 
-void DrawBoard(HDC hdc, RECT boardRect, int board[]);
-void DrawButton(HWND parent);
-HWND DrawPanel(HWND parent, RECT rect);
-HWND DrawPanel(HWND parent, int X, int Y, int Width, int Height);
+void  DrawBoard(HDC hdc, RECT boardRect, int board[]);
+void  DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT rcSource, RECT rcDest);
+
+POINT GetCellectedCell(int x, int y, RECT rect);
+void  InitSquare(RECT* rect, int offsetX, int offsetY);
+void  InitRect(int i, int j, RECT* rect, RECT boardRect);
+bool  PointInRect(int x, int y, RECT rect);
+inline bool PointsEqual(POINT p1, POINT p2);
+
+LPCWSTR GetLastMove();
+bool Takeback();
+bool ComputerMove();
+bool Move(POINT from, POINT to);
+
+void StartGame(HWND);
+void RestartGame(HWND);
+void EndGame(HWND,int);
+bool CheckEndGame();
+
+void  InitPieces(HWND);
+void  FreePieces();
+
+int panelHeight = 78;
+bool g_isComputerPlaying = false;
+int g_side = WHITE;
+int g_level = 3;
+bool g_isActive = false;
 bool isCellSellected = false;
+bool isComputerThinking = false;
+bool isComputersTurn = false;
+bool isComputerPlaying = false;
+bool isWhiteSide = true;
+int side;		   
+int moveResult = 0;
 POINT sellectedCell = { -1,-1 };
-//HWND g_myStatic;
+RECT boardRect = { -1,-1,-1,-1 };
+HWND hBoardPanel = NULL;
+HWND hNewGameBtn = NULL;
+HWND hRestartBtn = NULL;
+HWND hResignBtn = NULL;
+HWND hTakebackBtn = NULL;
+HBITMAP PIECE_BITMAP[16];
+GameListBox* listBox = nullptr;
 
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -60,25 +84,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-
-	// TODO: Разместите код здесь.
-
-	// Инициализация глобальных строк
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadStringW(hInstance, IDC_WINDOWSCHESS, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
-
-	// Выполнить инициализацию приложения:
 	if (!InitInstance(hInstance, nCmdShow))
 	{
 		return FALSE;
 	}
-
 	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSCHESS));
-
 	MSG msg;
-
-	// Цикл основного сообщения:
 	while (GetMessage(&msg, nullptr, 0, 0))
 	{
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
@@ -87,17 +101,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-
 	return (int)msg.wParam;
 }
 
 
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-	WNDCLASSEXW wcex;
-
+	WNDCLASSEXW wcex;				 
 	wcex.cbSize = sizeof(WNDCLASSEX);
-
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = WndProc;
 	wcex.cbClsExtra = 0;
@@ -108,14 +119,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_WINDOWSCHESS);
 	wcex.lpszClassName = szWindowClass;
-	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));  
 	return RegisterClassExW(&wcex);
 }
-
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-	hInst = hInstance; 
+	hInst = hInstance;
 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
@@ -130,48 +139,131 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	return TRUE;
 }
-
-void InitSquare(RECT* rect, int offsetX, int offsetY) {
-	rect->left += offsetX; rect->top += offsetY;
-	int offset;
-	if ((rect->right - rect->left) > (rect->bottom - rect->top)) {
-		offset = ((rect->bottom - rect->top) % BORDER_SIZE) / 2;
-		rect->right = rect->left + rect->bottom - rect->top;
-	}
-	else {
-		offset = ((rect->right - rect->left) % BORDER_SIZE) / 2;
-		rect->bottom = rect->top + rect->right - rect->left;
-	}
-}
-
-bool PointInRect(int x, int y,RECT rect) {
-	return (x <= rect.right) & (x >= rect.left) & (y >= rect.top) & (y <= rect.bottom);
-}
-POINT GetCellectedCell(int x, int y, RECT rect) {
-	int size = (rect.right - rect.left) / BORDER_SIZE;
-	x -= rect.left;
-	y -= rect.top;
-	POINT result = { (int)(x / size) ,BORDER_SIZE-1-(int)(y / size) };
-	return result;
-}
-
-inline bool PointsEqual(POINT p1, POINT p2) {
-	return (p1.x == p2.x) & (p1.y == p2.y);
-}
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
-
 	RECT r;
 	GetClientRect(hWnd, &r);
 	switch (message)
 	{
-	case WM_COMMAND:
+	case WM_TIMER:
 	{
+		switch (wParam)
+		{
+		case IDT_GAME_TIMERID: {
+			if (isComputerPlaying && isComputersTurn) {
+				if (!isComputerThinking) {
+					isComputerThinking = true;
+					ComputerMove();
+					isComputersTurn = false;
+					LPCWSTR move = GetLastMove();
+					listBox->AddMove(move);
+					if (CheckEndGame()) {
+						EndGame(hWnd, moveResult);
+					}
+					isComputerThinking = false;
+					InvalidateRect(hWnd, NULL, true);
+				}
+			}
+			break;
+		}
+		}
+		break;
+	}
+	case WM_COMMAND:
+	{	
+		if (g_isActive) {
+			if ((LOWORD(wParam)==ID_NEWGAME) || (HWND)lParam == hNewGameBtn) {
+				if (MessageBox(hWnd, L"Вы уверенны, что хотите начать новую игру?", L"Новая игра", MB_OKCANCEL) == IDOK) {
+					StartGame(hWnd);
+					InvalidateRect(hWnd, &boardRect, true);
+				}
+			}
+			if ((HWND)lParam == hTakebackBtn) {
+				if (isComputerPlaying) {
+					Takeback();
+					listBox->DeleteMove();
+					Takeback();
+					listBox->DeleteMove();
+				}
+				else {
+					if (Takeback()) {
+						isWhiteSide = !isWhiteSide;
+						listBox->DeleteMove();
+					}
+				}
+				InvalidateRect(hWnd, &boardRect, true);
+			}
+			if ((HWND)lParam == hRestartBtn) {
+				if (MessageBox(hWnd, L"Вы уверенны, что хотите начать заново?", L"Новая игра", MB_OKCANCEL) == IDOK) {
+					RestartGame(hWnd);
+					InvalidateRect(hWnd, &boardRect, true);
+				}
+
+			}
+			if ((HWND)lParam == hResignBtn) {
+				if (MessageBox(hWnd, L"Вы уверенны, что хотите сдаться?", L"Признать поражение", MB_OKCANCEL) == IDOK) {
+					EndGame(hWnd, RESIGN);
+				}
+			}
+		}
+		else {
+			if ((LOWORD(wParam) == ID_NEWGAME) || (HWND)lParam == hNewGameBtn) {
+				StartGame(hWnd);
+				InvalidateRect(hWnd, &boardRect, true);
+			}
+		}
 		int wmId = LOWORD(wParam);
-		// Разобрать выбор в меню:
+		HMENU hMenu = GetMenu(hWnd);
+		switch (wmId) {
+		case ID_LEVEL_EASY:
+		case ID_LEVEL_MEDIUM:
+		case ID_LEVEL_HARD:
+			CheckMenuItem(hMenu, ID_LEVEL_EASY, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_LEVEL_MEDIUM, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_LEVEL_HARD, MF_UNCHECKED);
+			break;
+		case ID_COLOR_WHITE:
+		case ID_COLOR_BLACK:
+			CheckMenuItem(hMenu, ID_COLOR_WHITE, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_COLOR_BLACK, MF_UNCHECKED);
+			break;
+		case ID_ENEMY_HUMAN:
+		case ID_ENEMY_COMPUTER:
+			CheckMenuItem(hMenu, ID_ENEMY_HUMAN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_ENEMY_COMPUTER, MF_UNCHECKED);
+			break;
+		}
 		switch (wmId)
 		{
+		case ID_LEVEL_EASY:
+			g_level = 1;
+			CheckMenuItem(hMenu, ID_LEVEL_EASY, MF_CHECKED);
+			break;
+		case ID_LEVEL_MEDIUM:
+			g_level = 3;
+			CheckMenuItem(hMenu, ID_LEVEL_MEDIUM, MF_CHECKED);
+			break;
+		case ID_LEVEL_HARD:
+			g_level = 5;
+			CheckMenuItem(hMenu, ID_LEVEL_HARD, MF_CHECKED);
+			break;								  		
+		case ID_COLOR_WHITE:
+			g_side = WHITE;
+			CheckMenuItem(hMenu, ID_COLOR_WHITE, MF_CHECKED);
+			break;
+		case ID_COLOR_BLACK:
+			g_side = BLACK;
+			CheckMenuItem(hMenu, ID_COLOR_BLACK, MF_CHECKED);
+			break;
+		case ID_ENEMY_HUMAN:
+			g_isComputerPlaying = false;
+			CheckMenuItem(hMenu, ID_ENEMY_HUMAN, MF_CHECKED);
+			break;
+		case ID_ENEMY_COMPUTER:
+			g_isComputerPlaying = true;
+			CheckMenuItem(hMenu, ID_ENEMY_COMPUTER, MF_CHECKED);
+			break;
+
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -181,97 +273,136 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
-	}
-	break;
-	case WM_LBUTTONDOWN:
-	{
-		int xPos = GET_X_LPARAM(lParam);
-		int yPos = GET_Y_LPARAM(lParam);
-		if (!isCellSellected) {
-			if (PointInRect(xPos, yPos, boardRect)) {
-				sellectedCell = GetCellectedCell(xPos, yPos, boardRect);
-				isCellSellected = true;
-			}
-		}
-		else {
-			isCellSellected = false;
-			sellectedCell = {-1,-1};
-			//Move()
-		}
-		InvalidateRect(hWnd,&boardRect,true);
-		//UpdateWindow(hWnd);
 		break;
 	}
-	break;
+	case WM_LBUTTONDOWN:
+	{	
+		int xPos = GET_X_LPARAM(lParam);
+		int yPos = GET_Y_LPARAM(lParam);
+		if (g_isActive) {
+			if (!isCellSellected) {
+				if (PointInRect(xPos, yPos, boardRect)) {
+					sellectedCell = GetCellectedCell(xPos, yPos, boardRect);
+					isCellSellected = true;
+				}
+			}
+			else {
+				if (!isComputerThinking) {
+					POINT newCell;				
+					if (PointInRect(xPos, yPos, boardRect)) {
+						newCell = GetCellectedCell(xPos, yPos, boardRect);
+						if (isWhiteSide) {
+							if (Move(sellectedCell, newCell)) {
+								LPCWSTR move = GetLastMove();
+								listBox->AddMove(move);
+								if (CheckEndGame()) {
+									EndGame(hWnd, moveResult);
+								}
+							}
+						}
+						else {
+							if (Move({ BORDER_SIZE - 1 - sellectedCell.x,BORDER_SIZE - 1 - sellectedCell.y },
+								{ BORDER_SIZE - 1 - newCell.x,BORDER_SIZE - 1 - newCell.y })) {
+								LPCWSTR move = GetLastMove();
+								listBox->AddMove(move);
+								if (CheckEndGame()) {
+									EndGame(hWnd,moveResult);
+								}
+							}
+
+						}
+						isCellSellected = false;
+						sellectedCell = { -1,-1 };
+					}
+				}
+			}
+			InvalidateRect(hWnd, &boardRect, true);
+		}
+		break;
+	}
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);	
+		HDC hdc = BeginPaint(hWnd, &ps);
 		GetClientRect(hWnd, &boardRect);
-		InitSquare(&boardRect, 4, 70);
+		InitSquare(&boardRect, 4, panelHeight + 2);
+		FillRect(hdc, &r, (HBRUSH)BLACK_BRUSH);
+
 		HDC hMemDC = CreateCompatibleDC(hdc);
-
 		HBITMAP hBM = CreateCompatibleBitmap(hdc, boardRect.right, boardRect.bottom);
-
 		HANDLE hOld = SelectObject(hMemDC, hBM);
-		DrawBoard(hMemDC, boardRect, INIT_BOARD);
+
+		DrawBoard(hMemDC, boardRect, board);
 		BitBlt(hdc, 0, 0, boardRect.right, boardRect.bottom, hMemDC, 0, 0, SRCCOPY);
-		SelectObject(hMemDC, hOld);
 
+		SelectObject(hMemDC, hOld);													 
 		DeleteObject(hBM);
-
 		DeleteDC(hMemDC);
+
 		EndPaint(hWnd, &ps);
 		break;
 	}
-	/*
-		case WM_DRAWITEM:
-		{
-			g_myStatic = CreateWindowEx(0, L"STATIC", L"Some static text",
-				WS_CHILD | WS_VISIBLE | SS_OWNERDRAW,
-				25, 125, 150, 20, hWnd, 0, 0, 0);
-			LPDRAWITEMSTRUCT pDIS = (LPDRAWITEMSTRUCT)lParam;
-			if (pDIS->hwndItem == g_myStatic)
-			{
-				SetTextColor(pDIS->hDC, RGB(100, 0, 100));
-				WCHAR staticText[99];
-				int len = SendMessage(g_myStatic, WM_GETTEXT,
-					ARRAYSIZE(staticText), (LPARAM)staticText);
-				TextOut(pDIS->hDC, pDIS->rcItem.left, pDIS->rcItem.top, staticText, len);
-			}
-			break;
-		} */
 	case WM_GETMINMAXINFO:
 	{
 		MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-		mmi->ptMinTrackSize = { 800,600 };
-		//mmi->ptMaxSize.x = 800;
-		//mmi->ptMaxSize.y = 600;						                      
+		mmi->ptMinTrackSize = { 900,600 };
+		break;
+	}
+	case WM_SIZE:
+	{
+		MoveWindow(hBoardPanel, 0, 0, r.right - r.left, panelHeight, true);
+		GetClientRect(hWnd, &boardRect);
+		InitSquare(&boardRect, 4, panelHeight + 2);
+		listBox->Move({ boardRect.right,boardRect.top,r.right,r.bottom });
 		break;
 	}
 	case WM_DESTROY:
+	{
+		EndGame(hWnd, CANCEL);
+		DestroyWindow(hBoardPanel);
+		DestroyWindow(hTakebackBtn);
+		DestroyWindow(hNewGameBtn);
+		DestroyWindow(hRestartBtn);
+		DestroyWindow(hResignBtn);
+		delete listBox;
+		FreePieces();
 		PostQuitMessage(0);
 		break;
+	}
 	case WM_CREATE:
-
-		DrawPanel(hWnd, 0, 0, r.right, 68);
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-	return 0;
-}
-LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
 	{
-
+		hBoardPanel = CreateWindowEx(WS_EX_CLIENTEDGE | WS_EX_DLGMODALFRAME, _T("STATIC"), _T(""),
+			WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE | SS_SUNKEN,
+			r.left, r.top, r.right - r.left, panelHeight,
+			hWnd, (HMENU)NULL, GetModuleHandle(NULL), (LPVOID)NULL);
+		hNewGameBtn = CreateWindow(L"BUTTON", L"Новая игра",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | BS_MULTILINE,
+			5, 5, panelHeight - 10, panelHeight - 10, hWnd, NULL,
+			(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+		hRestartBtn = CreateWindow(L"BUTTON", L"Заново",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | BS_MULTILINE,
+			5 + panelHeight - 10, 5, panelHeight - 10, panelHeight - 10, hWnd, NULL,
+			(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+		hResignBtn = CreateWindow(L"BUTTON", L"Сдаться",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | BS_MULTILINE,
+			5 + 2 * (panelHeight - 10), 5, panelHeight - 10, panelHeight - 10, hWnd, NULL,
+			(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+		hTakebackBtn = CreateWindow(L"BUTTON", L"Вернуть",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | BS_MULTILINE,
+			5 + 3 * (panelHeight - 10), 5, panelHeight - 10, panelHeight - 10, hWnd, NULL,
+			(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+		InitPieces(hWnd);
+		GetClientRect(hWnd, &boardRect);
+		InitSquare(&boardRect, 4, panelHeight + 2);
+		listBox = new GameListBox(hWnd, { boardRect.right,boardRect.top,r.right,r.bottom }, IDC_LISTBOX_WHITE);
+		//StartGame(hWnd);
+		break;
+	}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;
 }
-// Обработчик сообщений для окна "О программе".
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);
@@ -291,150 +422,57 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-void DrawButton(HWND parent, HDC hdc, POINT start, POINT end, LPCWSTR text) {
-	HWND hwndButton = CreateWindow(
-		L"BUTTON",  // Predefined class; Unicode assumed 
-		L"OK",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		10,         // x position 
-		10,         // y position 
-		100,        // Button width
-		100,        // Button height
-		parent,     // Parent window
-		NULL,       // No menu.
-		(HINSTANCE)GetWindowLongPtr(parent, GWLP_HINSTANCE),
-		NULL);      // Pointer not needed.
-
-}
-void DrawButton(HWND parent) {
-	HWND hwndButton = CreateWindow(
-		L"BUTTON",  // Predefined class; Unicode assumed 
-		L"OK",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		10,         // x position 
-		10,         // y position 
-		100,        // Button width
-		100,        // Button height
-		parent,     // Parent window
-		NULL,       // No menu.
-		(HINSTANCE)GetWindowLongPtr(parent, GWLP_HINSTANCE),
-		NULL);      // Pointer not needed.
-
-}
-void InitRect(int i, int j, RECT* rect, RECT boardRect)
-{
-	int cellSize = (boardRect.right - boardRect.left) / BORDER_SIZE;
-	rect->left = boardRect.left + j * cellSize;
-	rect->right = rect->left + cellSize;
-	rect->top = boardRect.top + i * cellSize;
-	rect->bottom = rect->top + cellSize;
-}
-
-HWND DrawPanel(HWND parent, int X, int Y, int Width, int Height) {
-	HWND panel = CreateWindowEx(WS_EX_CLIENTEDGE | WS_EX_DLGMODALFRAME, _T("STATIC"), _T("Panel 1"),
-		WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE | SS_SUNKEN, X, Y, Width, Height, parent, (HMENU)NULL, GetModuleHandle(NULL), (LPVOID)NULL);
-	return panel;
-}
-HWND DrawPanel(HWND parent, RECT rect) {
-	HWND panel = CreateWindowEx(WS_EX_CLIENTEDGE | WS_EX_DLGMODALFRAME, _T("STATIC"), _T("Panel 1"),
-		WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE | SS_SUNKEN, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, parent, (HMENU)NULL, GetModuleHandle(NULL), (LPVOID)NULL);
-	return panel;
-}
-
-void DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT& rcSource, RECT& rcDest)
+void DrawImageStretched(HDC hDC, HBITMAP hBitmap, RECT rcSource, RECT rcDest)
 {
 
 	HDC hdcMem = CreateCompatibleDC(hDC);
 	if (hdcMem)
 	{
-		//	Select new bitmap and backup old bitmap
 		HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, hBitmap);
-		
-		//	Fetch and blit bitmap
 		BITMAP bm;
 		if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
 		{
-			//	Blit!
 			SetStretchBltMode(hDC, BLACKONWHITE);
-			StretchBlt(hDC,
+			TransparentBlt(hDC,
 				rcDest.left, rcDest.top, (rcDest.right - rcDest.left), (rcDest.bottom - rcDest.top),
 				hdcMem,
 				rcSource.left, rcSource.top, (rcSource.right - rcSource.left), (rcSource.bottom - rcSource.top),
-				SRCCOPY);
-		}
+				0xc8aeff);
 
-		//	Restore old bitmap
+		}						  
 		(HBITMAP)SelectObject(hdcMem, hbmOld);
-
-		//	Discard MemDC
 		DeleteDC(hdcMem);
 	}
 }
-HBITMAP CreateBitmapMask(HBITMAP hbmColour, COLORREF crTransparent)
-{
-	HDC hdcMem, hdcMem2;
-	HBITMAP hbmMask;
-	BITMAP bm;
-
-	// Создаем монохромную (1 бит) растровую маску.  
-
-	GetObject(hbmColour, sizeof(BITMAP), &bm);
-	hbmMask = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 1, NULL);
-
-	// Получить несколько HDC, совместимых с драйвером дисплея
-
-	hdcMem = CreateCompatibleDC(0);
-	hdcMem2 = CreateCompatibleDC(0);
-
-	(HBITMAP)SelectObject(hdcMem, hbmColour);
-	(HBITMAP)SelectObject(hdcMem2, hbmMask);
-
-	// Устанавливаем цвет фона цветного изображения на цвет
-	// вы хотите быть прозрачным.
-	SetBkColor(hdcMem, crTransparent);
-
-	// Копируем биты из цветного изображения в маску B + W ... все
-	// с цветом фона становится белым, а все остальное заканчивается
-	// черный ... То, что мы хотели.
-
-	BitBlt(hdcMem2, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, SRCCOPY);
-
-	// Берем нашу новую маску и используем ее, чтобы сделать прозрачный цвет в нашем
-	// исходное цветное изображение становится черным, чтобы эффект прозрачности был
-	// работаем правильно.
-	BitBlt(hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem2, 0, 0, SRCINVERT);
-
-	// Очистить.
-
-	DeleteDC(hdcMem);
-	DeleteDC(hdcMem2);
-
-	return hbmMask;
-}
-
 void DrawBoard(HDC hDC, RECT boardRect, int board[]) {
-
-	//FillRect(hdc, &boardRect, (HBRUSH)CreateSolidBrush(RGB(0, 0, 255)));
-	// CreateSolidBrush(RGB(0xFF, 0xFF, 0xFF));
-	// CreateSolidBrush(RGB(0x0, 0x0, 0x0));
 	HBRUSH lightCell = CreateSolidBrush(0xCDFAFF);
 	HBRUSH darkCell = CreateSolidBrush(0xB46411);
 	HBRUSH sellectedLightCell = CreateSolidBrush(0x00FF66);
 	HBRUSH sellectedDarkCell = CreateSolidBrush(0x228B22);
-	HDC hMemDC = CreateCompatibleDC(hDC);
-	//HANDLE hFile = CreateFile(MAKEINTRESOURCE(BLACK_R), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HBRUSH white = (HBRUSH)CreateSolidBrush(0xFFFFFF);
+	HBRUSH black = (HBRUSH)CreateSolidBrush(0x000000);
 
+	HDC hMemDC = CreateCompatibleDC(hDC);
 	HBITMAP figure = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(BLACK_R));
-	
-	//L"e:\\BSUIR\\GITHUB\\Course_work_5sem\\Chess\\WindowsChess\\Figures\\BLACK_R.bmp"
-																																
-	HANDLE hOld = NULL;
+	HGDIOBJ hOld = NULL;
 	BITMAP bm;
-	
 	RECT rect;
 	int k = 0;
-	for (int i = 0; i < BORDER_SIZE; i++) {
-		for (int j = 0; j < BORDER_SIZE; j++) {
+	int startindexI = 0;
+	int lastindexI = BORDER_SIZE;
+	int startindexJ = BORDER_SIZE - 1;
+	int lastindexJ = -1;
+	int shift = 1;
+	if (isWhiteSide) {
+		startindexI = BORDER_SIZE - 1;
+		lastindexI = -1;
+		startindexJ = 0;
+		lastindexJ = BORDER_SIZE;
+		shift = -1;
+	}
+	for (int i = startindexI; i != lastindexI; i += shift) {
+		for (int j = startindexJ; j != lastindexJ; j -= shift) {
+
 			while (board[k] == OFFBOARD) {
 				k++;
 			}
@@ -456,30 +494,14 @@ void DrawBoard(HDC hDC, RECT boardRect, int board[]) {
 				}
 			}
 			if (board[k] != EMPTY) {
-				HPEN pen = (HPEN)CreatePen(PS_DOT, 2, 0x000000FF);
-
-				hOld = SelectObject(hDC, pen);
-				Ellipse(hDC, rect.left, rect.top, rect.right, rect.bottom);
-				SelectObject(hDC, hOld);
-
-				/*
-				GetObject(figure, sizeof(BITMAP), (LPSTR)&bm);
-				hOld = (HBITMAP)SelectObject(hMemDC, figure);
-				StretchBlt(hDC, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-				SelectObject(hMemDC, hOld);
-				*/
+				
+				RECT sourceRect = { 0,0,200,200 };
+				DrawImageStretched(hDC, PIECE_BITMAP[((board[k] & PIECE_MASK) + (board[k] & BLACK))], sourceRect, rect);
 			}
 			k++;
 
-
-		}
+		}								 
 	}
-
-
-	//SelectObject(hDC, figure);
-	//BitBlt(hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
-	//SelectObject(hDC, figure);
-	//BitBlt(hDC, 0, bm.bmHeight, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCPAINT);
 	if (hOld != NULL) {
 		DeleteObject(hOld);
 	}
@@ -489,6 +511,328 @@ void DrawBoard(HDC hDC, RECT boardRect, int board[]) {
 	DeleteDC(hMemDC);
 	DeleteObject(sellectedLightCell);
 	DeleteObject(sellectedDarkCell);
+
+	DeleteObject(white);
+	DeleteObject(black);
 	DeleteObject(lightCell);
 	DeleteObject(darkCell);
+}
+
+POINT GetCellectedCell(int x, int y, RECT rect) {
+	int size = (rect.right - rect.left) / BORDER_SIZE;
+	x -= rect.left;
+	y -= rect.top;
+	POINT result = { (int)(x / size) ,BORDER_SIZE - 1 - (int)(y / size) };
+	return result;
+}
+void InitRect(int i, int j, RECT* rect, RECT boardRect)
+{
+	int cellSize = (boardRect.right - boardRect.left) / BORDER_SIZE;
+	rect->left = boardRect.left + j * cellSize;
+	rect->right = rect->left + cellSize;
+	rect->top = boardRect.top + i * cellSize;
+	rect->bottom = rect->top + cellSize;
+}
+void InitSquare(RECT* rect, int offsetX, int offsetY) {
+	rect->left += offsetX; rect->top += offsetY;
+	int offset;
+	if ((rect->right - rect->left) > (rect->bottom - rect->top)) {
+		offset = ((rect->bottom - rect->top) % BORDER_SIZE) / 2;
+		rect->right = rect->left + rect->bottom - rect->top;
+	}
+	else {
+		offset = ((rect->right - rect->left) % BORDER_SIZE) / 2;
+		rect->bottom = rect->top + rect->right - rect->left;
+	}
+}
+bool PointInRect(int x, int y, RECT rect) {
+	return (x <= rect.right) & (x >= rect.left) & (y >= rect.top) & (y <= rect.bottom);
+}
+inline bool PointsEqual(POINT p1, POINT p2) {
+	return (p1.x == p2.x) & (p1.y == p2.y);
+}
+
+void InitPieces(HWND hWnd) {
+	PIECE_BITMAP[0]  = NULL;
+	PIECE_BITMAP[1]  = LoadBitmap(hInst,MAKEINTRESOURCE(WHITE_P));
+	PIECE_BITMAP[2]  = LoadBitmap(hInst,MAKEINTRESOURCE(WHITE_R));
+	PIECE_BITMAP[3]  = LoadBitmap(hInst,MAKEINTRESOURCE(WHITE_N));
+	PIECE_BITMAP[4]  = LoadBitmap(hInst,MAKEINTRESOURCE(WHITE_B));
+	PIECE_BITMAP[5]  = LoadBitmap(hInst,MAKEINTRESOURCE(WHITE_Q));
+	PIECE_BITMAP[6]  = LoadBitmap(hInst,MAKEINTRESOURCE(WHITE_K));
+	PIECE_BITMAP[7]  = NULL;										 
+	PIECE_BITMAP[8]  = NULL;
+	PIECE_BITMAP[9]  = LoadBitmap(hInst,MAKEINTRESOURCE(BLACK_P));
+	PIECE_BITMAP[10] = LoadBitmap(hInst,MAKEINTRESOURCE(BLACK_R));
+	PIECE_BITMAP[11] = LoadBitmap(hInst,MAKEINTRESOURCE(BLACK_N));
+	PIECE_BITMAP[12] = LoadBitmap(hInst,MAKEINTRESOURCE(BLACK_B));
+	PIECE_BITMAP[13] = LoadBitmap(hInst,MAKEINTRESOURCE(BLACK_Q));
+	PIECE_BITMAP[14] = LoadBitmap(hInst,MAKEINTRESOURCE(BLACK_K));
+ 	PIECE_BITMAP[15] = NULL;
+}
+void FreePieces() {
+	DeleteBitmap(PIECE_BITMAP[1]);
+	DeleteBitmap(PIECE_BITMAP[2]);
+	DeleteBitmap(PIECE_BITMAP[3]);
+	DeleteBitmap(PIECE_BITMAP[4]);
+	DeleteBitmap(PIECE_BITMAP[5]);
+	DeleteBitmap(PIECE_BITMAP[6]);
+	DeleteBitmap(PIECE_BITMAP[9]);
+	DeleteBitmap(PIECE_BITMAP[10]);
+	DeleteBitmap(PIECE_BITMAP[11]);
+	DeleteBitmap(PIECE_BITMAP[12]);
+	DeleteBitmap(PIECE_BITMAP[13]);
+	DeleteBitmap(PIECE_BITMAP[14]);
+}
+
+int lastMove;
+int lastPiece;
+int lastFrom = 0;
+int lastTo = 0;
+int lastCaptured = 0;
+int lastXCapture = 0;
+void StartGame(HWND hWnd) {
+
+	initGlobals();
+	setLevel(g_level);
+	restart();
+	isComputersTurn = false;
+	if (isComputerPlaying = g_isComputerPlaying) {
+		if (!(isWhiteSide = (g_side == (int)WHITE))) {
+			side = g_side;
+			isComputersTurn = true;
+		}
+		SetTimer(hWnd, IDT_GAME_TIMERID, 2000, (TIMERPROC)NULL);
+	}
+	else {
+		isWhiteSide = true;
+	}
+	listBox->DeleteAll();
+	g_isActive = true;
+
+}
+void RestartGame(HWND hWnd) {
+	initGlobals();
+	restart();
+	isComputersTurn = false;
+	if (isComputerPlaying) {
+		if (!(isWhiteSide = (side == (int)WHITE))) {			
+			isComputersTurn = true;
+		}
+		SetTimer(hWnd, IDT_GAME_TIMERID, 2000, (TIMERPROC)NULL);
+	}
+	else {
+		isWhiteSide = true;
+	}
+	listBox->DeleteAll();
+	g_isActive = true;
+
+}
+void EndGame(HWND hWnd, int reason) {
+	g_isActive = false;
+	if (isComputerPlaying) {
+		KillTimer(hWnd, IDT_GAME_TIMERID);
+	}
+	switch (reason) {
+	case STALEMATE: {
+		if (MessageBox(hWnd, L"Ничья!\nХотите начать новую игру?", L"Игра окончена", MB_OKCANCEL) == IDOK) {
+			RestartGame(hWnd);
+		}
+		break;
+	}
+	case CHECKMATE: {
+		if ((lastPiece & WHITE)!=0) {
+			if (MessageBox(hWnd, L"Мат!Белые победили!\nХотите начать новую игру?", L"Игра окончена", MB_OKCANCEL) == IDOK) {
+				RestartGame(hWnd);
+			}
+		}
+		else {
+			if (MessageBox(hWnd, L"Мат!Чёрные победили!\nХотите начать новую игру?", L"Игра окончена", MB_OKCANCEL) == IDOK) {
+				RestartGame(hWnd);
+			}
+		}
+		break;
+	}
+	case RESIGN: {
+		if ((lastPiece & WHITE) != 0) {
+			if (MessageBox(hWnd, L"Белые сдались!Победа чёрных!\nХотите начать новую игру?", L"Игра окончена", MB_OKCANCEL) == IDOK) {
+				RestartGame(hWnd);
+			}
+		}
+		else {
+			if (MessageBox(hWnd, L"Чёрные сдались!Победа белых!\nХотите начать новую игру?", L"Игра окончена", MB_OKCANCEL) == IDOK) {
+				RestartGame(hWnd);
+			}
+		}
+		break;
+	}
+	case CANCEL: {
+
+		break;
+	}
+
+	}
+}
+bool CheckEndGame() {
+	return (moveResult == CHECKMATE) || (moveResult == STALEMATE);
+}
+
+wchar_t* StringToLPCWSTR(std::string str)
+{
+	int length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
+	wchar_t* text = new wchar_t[length];
+	MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, text, length);
+	return text;
+}
+LPCWSTR GetLastMove() {
+	std::string res;
+	res.append(1, (char)(PIECE_CHARS[((lastPiece & PIECE_MASK) + (lastPiece & BLACK))]));
+	res.append(1, (char)('a' + (lastFrom % STRIDE - 1)));
+	res.append(1, (char)('1' + (lastFrom / STRIDE - 2)));
+	if (lastCaptured != 0) {
+		res.append(1, ':');
+	}
+	res.append(1, (char)('a' + (lastTo % STRIDE - 1)));
+	res.append(1, (char)('1' + (lastTo / STRIDE - 2)));
+	if (moveResult == STALEMATE) {
+		res.append(1, '-');
+	}
+	if (moveResult == CHECKMATE) {
+		res.append(1, 'x');
+	}		
+	LPCWSTR result = StringToLPCWSTR(res);		
+	return result;
+}
+bool Takeback() {
+	if (!isComputerThinking) {
+		lastMove = takeBackMove();
+		if (lastMove > 0) {
+			lastFrom = moveFrom(lastMove);
+			lastTo = moveTo(lastMove);
+			lastMove = 0;
+			return true;
+		}
+		else {
+			lastMove = -1;
+		}
+
+	}
+	return false;
+}
+bool ComputerMove() {
+	bool moved = false;
+	lastMove = getComputerMove();
+	if (lastMove == CHECKMATE || lastMove == STALEMATE) {
+		moveResult = lastMove;
+		isComputersTurn = false;
+		lastMove = -1;
+	}
+	if (lastMove > 0) {
+
+		lastFrom = moveFrom(lastMove);
+		lastTo = moveTo(lastMove);
+		lastPiece = board[lastFrom];
+		lastCaptured = board[lastTo];
+		lastXCapture = xCapture;
+
+		moveResult = executeMove(lastMove);
+		switch (moveResult) {
+		case VALID_MOVE:
+		case CHECKMATE:
+		case STALEMATE: {
+			registerMove(lastMove, lastPiece, lastCaptured, lastXCapture);
+			moved = true;
+			if (moveResult == VALID_MOVE) {
+				isComputersTurn = !isComputersTurn;
+			}
+			else {
+				isComputersTurn = false;
+			}
+			break;
+		}
+
+		case IN_CHECK: {
+			lastMove = -1;
+			break;
+		}
+
+		case INVALID_MOVE: {
+			lastMove = -1;
+			break;
+		}
+		}
+	}
+	if (moveResult == CHECKMATE) {
+		lastMove = MATE;
+	}
+	else if (moveResult == STALEMATE) {
+		lastMove = MATE;
+	}
+	return moved;
+}
+bool Move(POINT from, POINT to) {
+	int result;
+	bool moved = false;
+	if (!PointsEqual(from, to)) {
+
+		lastMove = getUserMove2(from.x, from.y, to.x, to.y);
+		result = makeMove(from.x, from.y, to.x, to.y);
+
+		if (lastMove == CHECKMATE || lastMove == STALEMATE) {
+			moveResult = lastMove;
+			isComputersTurn = false;
+			lastMove = -1;
+		}
+		if (lastMove > 0) {
+			lastFrom = moveFrom(lastMove);
+			lastTo = moveTo(lastMove);
+			lastPiece = board[lastFrom];
+			lastCaptured = board[lastTo];
+			lastXCapture = xCapture;
+
+			moveResult = executeMove(lastMove);
+			switch (moveResult) {
+			case VALID_MOVE:
+			case CHECKMATE:
+			case STALEMATE: {
+				registerMove(lastMove, lastPiece, lastCaptured, lastXCapture);
+				moved = true;
+				if (isComputerPlaying) {
+					if (moveResult == VALID_MOVE) {
+						isComputersTurn = !isComputersTurn;
+					}
+					else {
+						isComputersTurn = false;
+					}
+				}
+				else {
+					if (moveResult == VALID_MOVE) {
+						isWhiteSide = !isWhiteSide;
+					}
+					else {
+						isComputersTurn = false;
+					}
+				}
+				break;
+			}
+
+			case IN_CHECK: {
+				lastMove = -1;
+				break;
+			}
+
+			case INVALID_MOVE: {
+				lastMove = -1;
+				break;
+			}
+			}
+		}
+		if (moveResult == CHECKMATE) {
+			lastMove = MATE;
+		}
+		else if (moveResult == STALEMATE) {
+			lastMove = MATE;
+		}
+	}
+	return moved;
 }
